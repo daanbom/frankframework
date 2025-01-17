@@ -15,11 +15,18 @@
 */
 package org.frankframework.lifecycle.servlets;
 
+import jakarta.servlet.http.HttpServletRequest;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.annotation.web.configurers.CsrfConfigurer;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 
 import lombok.Setter;
 
@@ -29,11 +36,38 @@ public class InMemoryAuthenticator extends AbstractServletAuthenticator {
 
 	@Override
 	public SecurityFilterChain configure(HttpSecurity http) throws Exception {
-		http.httpBasic(basic -> basic.realmName("Frank")); // Uses a BasicAuthenticationEntryPoint to force users to log in
+//		http.httpBasic(basic -> basic.realmName("Frank")); // Uses a BasicAuthenticationEntryPoint to force users to log in
+//		http.formLogin(Customizer.withDefaults());
+		/*http
+			.formLogin(form -> form
+			.loginPage("/iaf/gui/") // TODO Figure out a better way to get the servlet path
+			.permitAll()
+		);*/
+
+		http
+			//.securityMatcher("/login", "/logout")
+			.formLogin(form -> form
+				.loginPage("/iaf/gui/#/login") //url to login page
+				.loginProcessingUrl("/login") // POST endpoint
+				.failureHandler(
+					(req, res, ex) -> res.setStatus(HttpStatus.UNAUTHORIZED.value())
+				).permitAll()
+			)
+			.logout(logout -> logout
+				.logoutSuccessUrl("/iaf/gui/#/login?logout")
+			)
+			.exceptionHandling(handler -> handler
+				.authenticationEntryPoint(
+					new HttpStatusEntryPoint(HttpStatus.FORBIDDEN)
+				)
+			)
+			/*.authorizeHttpRequests(authorize -> authorize
+				.anyRequest().authenticated()
+			)*/;
 
 		UserDetails user = User.builder()
 				.username(username)
-				.password("{noop}"+password)
+				.password("{noop}" + password)
 				.roles(getSecurityRoles().toArray(new String[0]))
 				.build();
 

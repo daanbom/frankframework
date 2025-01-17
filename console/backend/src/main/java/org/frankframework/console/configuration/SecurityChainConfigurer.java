@@ -84,7 +84,7 @@ public class SecurityChainConfigurer implements ApplicationContextAware, Environ
 		} else {
 			http.csrf(CsrfConfigurer::disable);
 		}
-		http.formLogin(FormLoginConfigurer::disable); // Disable the form login filter
+//		http.formLogin(FormLoginConfigurer::disable); // Disable the form login filter
 
 		if(!corsEnabled) {
 			http.cors(CorsConfigurer::disable);
